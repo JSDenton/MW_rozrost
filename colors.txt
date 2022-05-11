@@ -5,6 +5,6 @@ ff0000 red
 ffff00 yellow
 00ffff cyan
 ff00ff purple
-000 black
+000000 black
 ff9d00
 ff00ea

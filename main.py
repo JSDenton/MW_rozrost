@@ -4,15 +4,6 @@ import sys
 
 from main_window import Main_window
 
-def read_colors(filename):
-    colors = []
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-        for line in lines:
-            if line[0]!='#':
-                colors.append(line[0:6])
-    return colors
-
 def _window():
     #-----initiate the window---------
     app = QApplication(sys.argv)

@@ -13,28 +13,30 @@ def get_max(arr):
             max = i
     return max
 class plane:
-    def __init__(self, x, y, color_num):
-        self.width = x
-        self.height = y
-        self.space = [[cell(0) for i in range(x)] for j in range(y)]
-        self.color_num = color_num
-        self.color_counts = [0 for i in range(color_num)]
-        self.color_counts[0] = x*y
     space = []
     width = 0
     height = 0
     color_counts = [] #holds cell count for every color
 
+    def __init__(self, x, y, color_num):
+        self.width = x
+        self.height = y
+        self.space = [[cell(id=0) for i in range(x)] for j in range(y)]
+        self.color_num = color_num+1
+        self.color_counts = [0 for i in range(color_num+1)]
+        self.color_counts[0] = x*y
+    
+
     #checks if this new cell is available and then places it in that spot
     #returns 1 if success, 0 if failure
     def set_new_cell(self, x, y, id): 
         if(self.space[x][y].id==0):
-            self.space[x][y] = cell(id)
+            self.space[x][y] = cell(id=id)
             return 1
         else: return 0
 
 
-    def generate(self, nucleon_count, type): #generates space with nucleon_count cells
+    def generate_space(self, nucleon_count, type): #generates space with nucleon_count cells
         i = 0
         match type:
             case 'Random':
@@ -46,7 +48,7 @@ class plane:
                 while i<nucleon_count:
                     x = self.width*i/nucleon_count**0.5
                     y = self.height*i/nucleon_count**0.5
-                    self.space[x][y] = cell(id)
+                    self.space[x][y] = cell(id=id)
             case 'Custom':
                 while i<nucleon_count:
                     x, y = get_point() #TODO: create function that gets point with mouseclick
@@ -141,5 +143,7 @@ class plane:
                 chosen_color = get_max(self.color_counts)
             else:
                 chosen_color = neigh_colors[0]
-        self.space[x][y] = cell(chosen_color)
+        self.space[x][y] = cell(id=chosen_color)
         self.color_counts[chosen_color] += 1
+        self.color_counts[0] -=1
+        

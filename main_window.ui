@@ -19,8 +19,8 @@
      <rect>
       <x>40</x>
       <y>50</y>
-      <width>781</width>
-      <height>711</height>
+      <width>820</width>
+      <height>740</height>
      </rect>
     </property>
    </widget>
@@ -194,7 +194,7 @@
      </rect>
     </property>
     <property name="maximum">
-     <number>30</number>
+     <number>100</number>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton">
