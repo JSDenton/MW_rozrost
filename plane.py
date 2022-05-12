@@ -18,7 +18,7 @@ class plane:
     height = 0
     color_counts = [] #holds cell count for every color
 
-    def __init__(self, x, y, color_num):
+    def __init__(self, x=0, y=0, color_num=0):
         self.width = x
         self.height = y
         self.space = [[cell(id=0) for i in range(x)] for j in range(y)]
@@ -36,7 +36,7 @@ class plane:
         else: return 0
 
 
-    def generate_space(self, nucleon_count, type): #generates space with nucleon_count cells
+    def generate_space(self, nucleon_count, type, window): #generates space with nucleon_count cells
         i = 0
         match type:
             case 'Random':
@@ -46,12 +46,12 @@ class plane:
                     i += self.set_new_cell(x, y, i)
             case 'Regular':
                 while i<nucleon_count:
-                    x = self.width*i/nucleon_count**0.5
-                    y = self.height*i/nucleon_count**0.5
+                    x = (self.width*i/nucleon_count)**0.5
+                    y = (self.height*i/nucleon_count)**0.5
                     self.space[x][y] = cell(id=id)
             case 'Custom':
                 while i<nucleon_count:
-                    x, y = get_point() #TODO: create function that gets point with mouseclick
+                    x, y = window.get_points() #TODO: create function that gets point with mouseclick
                     if x!=-1:
                         i += self.set_new_cell(x, y, i)
     
