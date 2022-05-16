@@ -2,7 +2,7 @@
 
 from turtle import width
 from sklearn.decomposition import SparseCoder
-import cell
+from cell import cell
 import random
 import math
 
@@ -143,7 +143,7 @@ class plane:
                 chosen_color = get_max(self.color_counts)
             else:
                 chosen_color = neigh_colors[0]
-        self.space[x][y] = cell(id=chosen_color)
+        self.space[x][y].change_color(chosen_color)
         self.color_counts[chosen_color] += 1
         self.color_counts[0] -=1
         

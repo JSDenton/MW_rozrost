@@ -54,9 +54,11 @@ class Ui_MainWindow(object):
         self.spinBox_width = QtWidgets.QSpinBox(self.centralwidget)
         self.spinBox_width.setGeometry(QtCore.QRect(890, 280, 61, 22))
         self.spinBox_width.setObjectName("spinBox_width")
+        self.spinBox_width.setMaximum(820)
         self.spinBox_height = QtWidgets.QSpinBox(self.centralwidget)
         self.spinBox_height.setGeometry(QtCore.QRect(970, 280, 61, 22))
         self.spinBox_height.setObjectName("spinBox_height")
+        self.spinBox_height.setMaximum(740)
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
         self.label_5.setGeometry(QtCore.QRect(890, 360, 131, 16))
         self.label_5.setObjectName("label_5")
@@ -67,11 +69,9 @@ class Ui_MainWindow(object):
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(890, 310, 141, 28))
         self.pushButton.setObjectName("pushButton")
-        self.pushButton.clicked.connect(self.generate_space)
         self.pushButton_start = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_start.setGeometry(QtCore.QRect(890, 430, 141, 28))
         self.pushButton_start.setObjectName("pushButton_start")
-        self.pushButton_start.clicked.connect(self.start_simulation)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1093, 26))
@@ -89,6 +89,10 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionSave_picture_as)
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
+
+
+        self.pushButton_start.clicked.connect(self.start_simulation)
+        self.pushButton.clicked.connect(self.generate_space)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -117,20 +121,33 @@ class Ui_MainWindow(object):
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 
     def generate_space(self):
-        self.space = plane(x=self.spinBox_width, y=self.spinBox_height, color_num=self.spinBox_nucleon_count)
-        self.canvas.width = self.spinBox_width
-        self.canvas.height = self.spinBox_height
-        self.space.generate_space(self.spinBox_nucleon_count, self.comboBox_distribution.currentText, self)
+        self.space = plane(x=self.spinBox_width.value(), y=self.spinBox_height.value(), color_num=self.spinBox_nucleon_count.value())
+        self.canvas.width = self.spinBox_width.value()
+        self.canvas.height = self.spinBox_height.value()
+        self.space.generate_space(self.spinBox_nucleon_count.value(), self.comboBox_distribution.currentText, self)
 
     def start_simulation(self):
         _translate = QtCore.QCoreApplication.translate
         self.pushButton_start.setText(_translate("MainWindow", "Stop simulation"))
+        self.pushButton_start.clicked.connect(self.stop_simulation)
         while True:
-            for i in range(self.spinBox_width):
-                for j in range(self.spinBox_height):
+            for i in range(self.spinBox_width.value()):
+                for j in range(self.spinBox_height.value()):
                     self.space.get_neighbours_color(i, j, self.comboBox_neighourhood.currentText, self.comboBox_boundaries.currentText)
-            if self.space.color_counts[0]<=0: #stop criterium
+            self.refresh_canvas()
+            if self.space.color_counts[0]<=0: #stop criterium - when there's no more white "tiles"
                 break
+    
+    def stop_simulation(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.pushButton_start.setText(_translate("MainWindow", "Start simulation"))
+        self.pushButton_start.clicked.connect(self.start_simulation)
+
+    def refresh_canvas(self):
+        for i in range(self.spinBox_width.value()):
+                for j in range(self.spinBox_height.value()):
+                    if self.space.space[i][j].id!=0:
+                        #TODO: finish this - find the way to refresh and draw on canvas
 
     #TODO: add a method that allows for custom nucleon picking
-    #TODO: add a method (or part of code) that allows for stopping the simulation
+    
