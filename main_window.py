@@ -15,12 +15,17 @@ class Ui_MainWindow(object):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1093, 847)
+        MainWindow.resize(1100, 900)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
+        self.centralwidget.setObjectName("centralwidget")   
+        self.scene = QtWidgets.QGraphicsScene()
         self.canvas = QtWidgets.QGraphicsView(self.centralwidget)
         self.canvas.setGeometry(QtCore.QRect(40, 50, 820, 740))
         self.canvas.setObjectName("canvas")
+        self.pixmap = QtGui.QPixmap(820, 740)
+        self.scene.addPixmap(self.pixmap)
+        
+        
         self.comboBox_neighourhood = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_neighourhood.setGeometry(QtCore.QRect(890, 70, 141, 22))
         self.comboBox_neighourhood.setObjectName("comboBox_neighourhood")
@@ -55,10 +60,12 @@ class Ui_MainWindow(object):
         self.spinBox_width.setGeometry(QtCore.QRect(890, 280, 61, 22))
         self.spinBox_width.setObjectName("spinBox_width")
         self.spinBox_width.setMaximum(820)
+        self.spinBox_width.setProperty("value", 820)
         self.spinBox_height = QtWidgets.QSpinBox(self.centralwidget)
         self.spinBox_height.setGeometry(QtCore.QRect(970, 280, 61, 22))
         self.spinBox_height.setObjectName("spinBox_height")
         self.spinBox_height.setMaximum(740)
+        self.spinBox_height.setProperty("value", 740)
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
         self.label_5.setGeometry(QtCore.QRect(890, 360, 131, 16))
         self.label_5.setObjectName("label_5")
@@ -66,6 +73,7 @@ class Ui_MainWindow(object):
         self.spinBox_nucleon_count.setGeometry(QtCore.QRect(890, 380, 61, 22))
         self.spinBox_nucleon_count.setMaximum(100)
         self.spinBox_nucleon_count.setObjectName("spinBox_nucleon_count")
+        self.spinBox_nucleon_count.setProperty("value", 30)
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(890, 310, 141, 28))
         self.pushButton.setObjectName("pushButton")
@@ -89,7 +97,6 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionSave_picture_as)
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
-
 
         self.pushButton_start.clicked.connect(self.start_simulation)
         self.pushButton.clicked.connect(self.generate_space)
@@ -124,15 +131,26 @@ class Ui_MainWindow(object):
         self.space = plane(x=self.spinBox_width.value(), y=self.spinBox_height.value(), color_num=self.spinBox_nucleon_count.value())
         self.canvas.width = self.spinBox_width.value()
         self.canvas.height = self.spinBox_height.value()
+
+        self.pixmap.width = self.spinBox_width.value()
+        self.pixmap.height = self.spinBox_height.value()
+              
         self.space.generate_space(self.spinBox_nucleon_count.value(), self.comboBox_distribution.currentText, self)
+        print("going to refresh")
+        self.refresh_canvas()
+
+        for i in range(self.pixmap.height):
+            for j in range(self.pixmap.width):
+                if self.space.space[i][j].id!=0:
+                    print(f"{i}, {j}, seed")
 
     def start_simulation(self):
         _translate = QtCore.QCoreApplication.translate
         self.pushButton_start.setText(_translate("MainWindow", "Stop simulation"))
         self.pushButton_start.clicked.connect(self.stop_simulation)
         while True:
-            for i in range(self.spinBox_width.value()):
-                for j in range(self.spinBox_height.value()):
+            for i in range(self.spinBox_height.value()):
+                for j in range(self.spinBox_width.value()):
                     self.space.get_neighbours_color(i, j, self.comboBox_neighourhood.currentText, self.comboBox_boundaries.currentText)
             self.refresh_canvas()
             if self.space.color_counts[0]<=0: #stop criterium - when there's no more white "tiles"
@@ -144,9 +162,17 @@ class Ui_MainWindow(object):
         self.pushButton_start.clicked.connect(self.start_simulation)
 
     def refresh_canvas(self):
-        for i in range(self.spinBox_width.value()):
-                for j in range(self.spinBox_height.value()):
+        print("yyo")
+        self.painter = QtGui.QPainter(self.pixmap)
+        for i in range(self.pixmap.height):
+                for j in range(self.pixmap.width):
                     if self.space.space[i][j].id!=0:
+                        pen = QtGui.QPen(QtGui.QColor(self.space[i][j].color))
+                        self.painter.setPen(pen)
+                        self.painter.drawPoint(i, j)
+                        print(i + " " + j)
+        self.painter.end()                
+        self.scene.update()
                         #TODO: finish this - find the way to refresh and draw on canvas
 
     #TODO: add a method that allows for custom nucleon picking
