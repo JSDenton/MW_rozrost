@@ -30,6 +30,7 @@ class plane:
     #checks if this new cell is available and then places it in that spot
     #returns 1 if success, 0 if failure
     def set_new_cell(self, x, y, id): 
+        #print("change")
         if(self.space[x][y].id==0):
             self.space[x][y] = cell(id=id)
             return 1
@@ -38,22 +39,25 @@ class plane:
 
     def generate_space(self, nucleon_count, type, window): #generates space with nucleon_count cells
         i = 0
+        print("start generating..")
+        print(type)
         match type:
             case 'Random':
                 while i<nucleon_count:
-                    x = random.random() * self.width
-                    y = random.random() * self.height
+                    x = int(random.random() * self.height)
+                    y = int(random.random() * self.width)
                     i += self.set_new_cell(x, y, i)
             case 'Regular':
                 while i<nucleon_count:
-                    x = (self.width*i/nucleon_count)**0.5
-                    y = (self.height*i/nucleon_count)**0.5
+                    x = int((self.width*i/nucleon_count)**0.5)
+                    y = int((self.height*i/nucleon_count)**0.5)
                     self.space[x][y] = cell(id=id)
             case 'Custom':
                 while i<nucleon_count:
                     x, y = window.get_points() #TODO: create function that gets point with mouseclick
                     if x!=-1:
                         i += self.set_new_cell(x, y, i)
+        print("end generating..")
     
 
     def boundaries(self, x, y, boundary_type):

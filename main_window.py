@@ -127,6 +127,8 @@ class Ui_MainWindow(object):
         self.actionSave_picture_as.setText(_translate("MainWindow", "Save picture as"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 
+        self.generate_space()
+
     def generate_space(self):
         self.space = plane(x=self.spinBox_width.value(), y=self.spinBox_height.value(), color_num=self.spinBox_nucleon_count.value())
         self.canvas.width = self.spinBox_width.value()
@@ -135,7 +137,7 @@ class Ui_MainWindow(object):
         self.pixmap.width = self.spinBox_width.value()
         self.pixmap.height = self.spinBox_height.value()
               
-        self.space.generate_space(self.spinBox_nucleon_count.value(), self.comboBox_distribution.currentText, self)
+        self.space.generate_space(self.spinBox_nucleon_count.value(), self.comboBox_distribution.currentText(), self)
         print("going to refresh")
         self.refresh_canvas()
 
@@ -164,13 +166,16 @@ class Ui_MainWindow(object):
     def refresh_canvas(self):
         print("yyo")
         self.painter = QtGui.QPainter(self.pixmap)
+        prev_color = 0
         for i in range(self.pixmap.height):
                 for j in range(self.pixmap.width):
                     if self.space.space[i][j].id!=0:
-                        pen = QtGui.QPen(QtGui.QColor(self.space[i][j].color))
-                        self.painter.setPen(pen)
+                        if prev_color!=self.space.space[i][j].id:
+                            pen = QtGui.QPen(QtGui.QColor(self.space.space[i][j].color))
+                            self.painter.setPen(pen)
+                            prev_color = self.space.space[i][j].id
                         self.painter.drawPoint(i, j)
-                        print(i + " " + j)
+                        print(f"{i} {j}")
         self.painter.end()                
         self.scene.update()
                         #TODO: finish this - find the way to refresh and draw on canvas
