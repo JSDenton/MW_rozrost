@@ -23,7 +23,7 @@ class plane:
         self.height = y
         self.space = [[cell(id=0) for i in range(x)] for j in range(y)]
         self.color_num = color_num+1
-        self.color_counts = [0 for i in range(color_num+1)]
+        self.color_counts = [0 for i in range(color_num)]
         self.color_counts[0] = x*y
     
 
@@ -31,10 +31,12 @@ class plane:
     #returns 1 if success, 0 if failure
     def set_new_cell(self, x, y, id): 
         #print("change")
+        print(id)
         if(self.space[x][y].id==0):
             self.space[x][y] = cell(id=id)
             return 1
         else: return 0
+
 
 
     def generate_space(self, nucleon_count, type, window): #generates space with nucleon_count cells
@@ -44,13 +46,13 @@ class plane:
         match type:
             case 'Random':
                 while i<nucleon_count:
-                    x = int(random.random() * self.height)
-                    y = int(random.random() * self.width)
+                    x = random.randint(0,self.height-1)
+                    y = random.randint(0,self.width-1)
                     i += self.set_new_cell(x, y, i)
             case 'Regular':
                 while i<nucleon_count:
-                    x = int((self.width*i/nucleon_count)**0.5)
-                    y = int((self.height*i/nucleon_count)**0.5)
+                    x = int((self.height*i/nucleon_count)**0.5)
+                    y = int((self.width*i/nucleon_count)**0.5)
                     self.space[x][y] = cell(id=id)
             case 'Custom':
                 while i<nucleon_count:
@@ -61,7 +63,7 @@ class plane:
     
 
     def boundaries(self, x, y, boundary_type):
-        if boundary_type==0:
+        if boundary_type=='Periodic':
             x=x%self.width
             y=y%self.height
         else:
@@ -76,15 +78,17 @@ class plane:
         return x, y
 
     #decides which color gets new cell; type (String) - type of neighbourhood;
-    #  boundary_type (int) - type of boundary condition (0 - periodic, 1 - absolute)
-    def get_neighbours_color(self, x, y, type, boundary_type): 
+    #  boundary_type (int) - type of boundary condition
+    def get_neighbours_color(self, y, x, type, boundary_type): 
         neigh_colors = [0 for i in range(self.color_num)]
+        
         match type:
-            case 'von Neumann':                
+            case 'von Neumann':     
                 for i in range(-2,3):
+                    print(i)
                     if i==0:
                         continue
-                    dx, dy = self.boundaries(x+i%2, y+i//2, boundary_type)
+                    dx, dy = self.boundaries(x+(i%2), y+(i//2), boundary_type)
                     if self.space[dx][dy].id!=0: #0 is default cell (not filled with any color)
                         neigh_colors[self.space[dx][dy].id]+=1
             case 'Moore':
@@ -140,6 +144,7 @@ class plane:
 
                 
         neigh_colors.sort()
+        print(neigh_colors)
         chosen_color = 0
         if neigh_colors[0]!=0:
             if neigh_colors[0] == neigh_colors[1]:
@@ -151,3 +156,14 @@ class plane:
         self.color_counts[chosen_color] += 1
         self.color_counts[0] -=1
         
+    def main_loop(self, type, boundaries_type, refresh):
+        iters = 0
+        while True:
+            for i in range(self.height):
+                for j in range(self.width):
+                    self.get_neighbours_color(i, j, type=type, boundary_type=boundaries_type)
+            if(iters%20==0):
+                refresh()
+            iters+=1
+            if self.color_counts[0]<=0: #stop criterium - when there's no more white "tiles"
+                break

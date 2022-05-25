@@ -8,23 +8,26 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from plane import plane
-
+import random
 
 class Ui_MainWindow(object):
     space = plane(820, 740, 5)
+    colors = []
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1100, 900)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")   
+
+        
         self.scene = QtWidgets.QGraphicsScene()
-        self.canvas = QtWidgets.QGraphicsView(self.centralwidget)
+        self.canvas = QtWidgets.QGraphicsView(self.scene, self.centralwidget)
         self.canvas.setGeometry(QtCore.QRect(40, 50, 820, 740))
         self.canvas.setObjectName("canvas")
-        self.pixmap = QtGui.QPixmap(820, 740)
-        self.scene.addPixmap(self.pixmap)
-        
+        self.image = QtGui.QImage(820, 740, QtGui.QImage.Format.Format_RGB32)
+
+        #self.scene.addItem(self.image)        
         
         self.comboBox_neighourhood = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_neighourhood.setGeometry(QtCore.QRect(890, 70, 141, 22))
@@ -130,33 +133,38 @@ class Ui_MainWindow(object):
         self.generate_space()
 
     def generate_space(self):
-        self.space = plane(x=self.spinBox_width.value(), y=self.spinBox_height.value(), color_num=self.spinBox_nucleon_count.value())
-        self.canvas.width = self.spinBox_width.value()
-        self.canvas.height = self.spinBox_height.value()
+        x = self.spinBox_width.value()
+        y = self.spinBox_height.value()
 
-        self.pixmap.width = self.spinBox_width.value()
-        self.pixmap.height = self.spinBox_height.value()
+        self.space = plane(x=x, y=y, color_num=self.spinBox_nucleon_count.value())
+        
+        self.canvas.setGeometry(QtCore.QRect(40, 50, x, y))
+        self.scene.setSceneRect(QtCore.QRectF(40, 50, x, y))
+        self.image = QtGui.QImage(x, y, QtGui.QImage.Format.Format_RGB32)
+        
+
+        #get colors for nucleons
+        self.colors = []
+        for i in range(self.spinBox_nucleon_count.value()):
+            self.colors.append(QtGui.QColor(random.randint(0,255),random.randint(0,255),random.randint(0,255)))
+            #print(f"{self.pens[i].color().red()} {self.pens[i].color().green()} {self.pens[i].color().blue()}")
               
         self.space.generate_space(self.spinBox_nucleon_count.value(), self.comboBox_distribution.currentText(), self)
         print("going to refresh")
         self.refresh_canvas()
 
-        for i in range(self.pixmap.height):
-            for j in range(self.pixmap.width):
+        for i in range(y-1):
+            for j in range(x-1):
                 if self.space.space[i][j].id!=0:
                     print(f"{i}, {j}, seed")
+                
 
     def start_simulation(self):
         _translate = QtCore.QCoreApplication.translate
         self.pushButton_start.setText(_translate("MainWindow", "Stop simulation"))
         self.pushButton_start.clicked.connect(self.stop_simulation)
-        while True:
-            for i in range(self.spinBox_height.value()):
-                for j in range(self.spinBox_width.value()):
-                    self.space.get_neighbours_color(i, j, self.comboBox_neighourhood.currentText, self.comboBox_boundaries.currentText)
-            self.refresh_canvas()
-            if self.space.color_counts[0]<=0: #stop criterium - when there's no more white "tiles"
-                break
+        
+        self.space.main_loop(type=self.comboBox_neighourhood.currentText(), boundaries_type=self.comboBox_boundaries.currentText(), refresh=self.refresh_canvas)
     
     def stop_simulation(self):
         _translate = QtCore.QCoreApplication.translate
@@ -164,20 +172,16 @@ class Ui_MainWindow(object):
         self.pushButton_start.clicked.connect(self.start_simulation)
 
     def refresh_canvas(self):
-        print("yyo")
-        self.painter = QtGui.QPainter(self.pixmap)
-        prev_color = 0
-        for i in range(self.pixmap.height):
-                for j in range(self.pixmap.width):
+        print(self.space.color_counts)
+        for i in range(self.space.height-1):
+                for j in range(self.space.width-1):
                     if self.space.space[i][j].id!=0:
-                        if prev_color!=self.space.space[i][j].id:
-                            pen = QtGui.QPen(QtGui.QColor(self.space.space[i][j].color))
-                            self.painter.setPen(pen)
-                            prev_color = self.space.space[i][j].id
-                        self.painter.drawPoint(i, j)
-                        print(f"{i} {j}")
-        self.painter.end()                
+                        self.image.setPixel(i, j, self.colors[self.space.space[i][j].id].rgb())
+                        #print(f"{i} {j}")   
+                        
+        self.scene.addPixmap(QtGui.QPixmap.fromImage(self.image))      
         self.scene.update()
+        
                         #TODO: finish this - find the way to refresh and draw on canvas
 
     #TODO: add a method that allows for custom nucleon picking
