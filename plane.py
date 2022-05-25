@@ -1,29 +1,36 @@
 
 
-from turtle import width
-from sklearn.decomposition import SparseCoder
+from copy import deepcopy
 from cell import cell
+from PyQt6.QtCore import QObject
+from PyQt6 import QtCore
 import random
 import math
 
 def get_max(arr):
     max = 0
+    iter = 0
     for i in arr:
-        if i>max:
+        if i>max and iter>0:
             max = i
     return max
-class plane:
+
+
+class plane(QObject):
     space = []
     width = 0
     height = 0
     color_counts = [] #holds cell count for every color
+    finished = QtCore.pyqtSignal()
+    progress = QtCore.pyqtSignal(int)
 
     def __init__(self, x=0, y=0, color_num=0):
+        super(plane, self).__init__()
         self.width = x
         self.height = y
         self.space = [[cell(id=0) for i in range(x)] for j in range(y)]
         self.color_num = color_num+1
-        self.color_counts = [0 for i in range(color_num)]
+        self.color_counts = [0 for i in range(color_num+1)]
         self.color_counts[0] = x*y
     
 
@@ -31,7 +38,7 @@ class plane:
     #returns 1 if success, 0 if failure
     def set_new_cell(self, x, y, id): 
         #print("change")
-        print(id)
+        #print(id)
         if(self.space[x][y].id==0):
             self.space[x][y] = cell(id=id)
             return 1
@@ -42,7 +49,7 @@ class plane:
     def generate_space(self, nucleon_count, type, window): #generates space with nucleon_count cells
         i = 0
         print("start generating..")
-        print(type)
+        #print(type)
         match type:
             case 'Random':
                 while i<nucleon_count:
@@ -75,7 +82,7 @@ class plane:
                 y=0
             elif y>=self.height:
                 y = self.height - 1
-        return x, y
+        return y, x
 
     #decides which color gets new cell; type (String) - type of neighbourhood;
     #  boundary_type (int) - type of boundary condition
@@ -85,7 +92,7 @@ class plane:
         match type:
             case 'von Neumann':     
                 for i in range(-2,3):
-                    print(i)
+                    #print(i)
                     if i==0:
                         continue
                     dx, dy = self.boundaries(x+(i%2), y+(i//2), boundary_type)
@@ -98,7 +105,7 @@ class plane:
                         if i!=0 and j!=0 and self.space[dx][dy].id!=0:
                             neigh_colors[self.space[dx][dy].id]+=1
             case 'Pentagonal':
-                pent_type = math.floor(random.random()*4)
+                pent_type = random.randint(0,3)
                 
                 match pent_type:
                     case 0: #right side is off
@@ -142,17 +149,18 @@ class plane:
                             if i!=0 and j!=0 and (i!=-1 and j!=1) and self.space[dx][dy].id!=0 :
                                 neigh_colors[self.space[dx][dy].id]+=1
 
-                
-        neigh_colors.sort()
-        print(neigh_colors)
+        neigh_colors = [[i, neigh_colors[i]] for i in range(len(neigh_colors))]
+        neigh_colors.sort(key=lambda d:d[1],reverse=True)
+        
         chosen_color = 0
-        if neigh_colors[0]!=0:
-            if neigh_colors[0] == neigh_colors[1]:
-                #TODO: co jak sąsiedzi mają remis i trzeba wyłonić "zwycięzcę"
+        if neigh_colors[0][1]!=0:
+            #print(neigh_colors)
+            if neigh_colors[0][1] == neigh_colors[1][1]:
                 chosen_color = get_max(self.color_counts)
             else:
-                chosen_color = neigh_colors[0]
-        self.space[x][y].change_color(chosen_color)
+                chosen_color = neigh_colors[0][0]
+        self.space[y][x].change_color(chosen_color)
+        #print(f"{self.color_counts} {chosen_color}")
         self.color_counts[chosen_color] += 1
         self.color_counts[0] -=1
         
@@ -167,3 +175,4 @@ class plane:
             iters+=1
             if self.color_counts[0]<=0: #stop criterium - when there's no more white "tiles"
                 break
+        self.finished.emit()

@@ -14,6 +14,16 @@ class Ui_MainWindow(object):
     space = plane(820, 740, 5)
     colors = []
 
+    def init_thread(self):
+        self.worker_thread = QtCore.QThread()
+        self.space.moveToThread(self.worker_thread)
+
+        self.worker_thread.started.connect(self.run)
+        self.space.finished.connect(self.worker_thread.quit)
+        self.space.finished.connect(self.space.deleteLater)
+        self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+        #self.space.progress.connect(self.reportProgress)
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1100, 900)
@@ -26,8 +36,8 @@ class Ui_MainWindow(object):
         self.canvas.setGeometry(QtCore.QRect(40, 50, 820, 740))
         self.canvas.setObjectName("canvas")
         self.image = QtGui.QImage(820, 740, QtGui.QImage.Format.Format_RGB32)
-
-        #self.scene.addItem(self.image)        
+        self.canvas.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.canvas.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)      
         
         self.comboBox_neighourhood = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_neighourhood.setGeometry(QtCore.QRect(890, 70, 141, 22))
@@ -130,6 +140,8 @@ class Ui_MainWindow(object):
         self.actionSave_picture_as.setText(_translate("MainWindow", "Save picture as"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 
+        self.init_thread()
+
         self.generate_space()
 
     def generate_space(self):
@@ -157,6 +169,8 @@ class Ui_MainWindow(object):
             for j in range(x-1):
                 if self.space.space[i][j].id!=0:
                     print(f"{i}, {j}, seed")
+                else:
+                    self.image.setPixel(j, i, QtGui.QColor("white").rgb())
                 
 
     def start_simulation(self):
@@ -164,8 +178,14 @@ class Ui_MainWindow(object):
         self.pushButton_start.setText(_translate("MainWindow", "Stop simulation"))
         self.pushButton_start.clicked.connect(self.stop_simulation)
         
-        self.space.main_loop(type=self.comboBox_neighourhood.currentText(), boundaries_type=self.comboBox_boundaries.currentText(), refresh=self.refresh_canvas)
+        self.worker_thread.start()
     
+    def run(self):
+        print("running...")
+        self.space.main_loop(type=self.comboBox_neighourhood.currentText(), boundaries_type=self.comboBox_boundaries.currentText(), refresh=self.refresh_canvas)
+        print("finished...")
+        self.stop_simulation()
+
     def stop_simulation(self):
         _translate = QtCore.QCoreApplication.translate
         self.pushButton_start.setText(_translate("MainWindow", "Start simulation"))
@@ -176,7 +196,7 @@ class Ui_MainWindow(object):
         for i in range(self.space.height-1):
                 for j in range(self.space.width-1):
                     if self.space.space[i][j].id!=0:
-                        self.image.setPixel(i, j, self.colors[self.space.space[i][j].id].rgb())
+                        self.image.setPixel(j, i, self.colors[self.space.space[i][j].id].rgb())
                         #print(f"{i} {j}")   
                         
         self.scene.addPixmap(QtGui.QPixmap.fromImage(self.image))      

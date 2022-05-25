@@ -17,8 +17,8 @@ class cell:
         self.color = self.red*256*256 + self.green*256 + self.blue
 
     def rand_color(self):
-        self.red = int(random.random()*256)
-        self.blue = int(random.random()*256)
-        self.green = int(random.random()*256)
+        self.red = random.randint(0,255)
+        self.blue = random.randint(0,255)
+        self.green = random.randint(0,255)
         self.mix_color()
     
